@@ -8,7 +8,7 @@ PET_SCHEMA = {
         "type": "string"
     },
     "category": {
-        "type": "object",
+        "type": ["object", 'null'],
       "properties": {
         "id": {
           "type": "integer"
@@ -21,13 +21,13 @@ PET_SCHEMA = {
       "additionalProperties": False
     },
     "photoUrls": {
-      "type": "array",
+      "type": ["array", 'null'],
       "items": {
         "type": "string"
       }
     },
     "tags": {
-      "type": "array",
+      "type": ["array", 'null'],
       "items": {
         "type": "object",
         "properties": {
