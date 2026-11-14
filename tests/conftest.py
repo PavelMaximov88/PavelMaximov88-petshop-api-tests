@@ -12,7 +12,9 @@ def create_pet():
         "status": "available"
     }
     response = requests.post(f"{BASE_URL}/pet", json=payload)
-    assert response.status_code == 200,  f"Не удалось создать питомца: {response.status_code} {response.text}"
+    assert response.status_code == 200, f"Не удалось создать питомца: {response.status_code} {response.text}"
     pet_data = response.json()
     yield pet_data
-    requests.delete(f"{BASE_URL}/pet/{pet_data['id']}")
+
+    delete_response = requests.delete(f"{BASE_URL}/pet/{pet_data['id']}")
+    assert delete_response.status_code in (200, 204, 404),f"Не удалось очистить питомца {pet_data['id']}: {delete_response.status_code} {delete_response.text}"

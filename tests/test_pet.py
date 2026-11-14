@@ -36,7 +36,7 @@ class TestPet:
 
         with allure.step("Проверка текстового содержимого ответа"):
             assert response.text == "Pet not found", "Текст ошибки не совпал с ожидаемым"
-#======================================================================================================================
+#================================================================================================================
 
     @allure.title("Добавление нового питомца")
     def test_add_pet(self):
@@ -93,23 +93,14 @@ class TestPet:
 
     @allure.title("Изменение информации о питомце по id")
     def test_put_pet_by_id(self, create_pet):
-        with allure.step("Получение id созданного питомца"):
-            pet_id = create_pet["id"]
 
         with allure.step("Подготовка данных для обновления"):
+            pet_id = create_pet["id"]
             updated_data_pet = {
                 "id": pet_id,
                 "name": "Buddy Updated",
                 "status": "sold"
             }
-
-        with allure.step("Отправка запроса на получение информации о питомце по id"):
-            response = requests.get(url=f"{BASE_URL}/pet/{pet_id}")
-
-        with allure.step("Проверка статуса ответа и данных питомца"):
-            assert response.status_code == 200, "ожидается 200"
-            assert response.json()["id"] == pet_id
-
         with allure.step("Отправка запроса на обновление информации о питомце"):
             put_response = requests.put(url=f"{BASE_URL}/pet", json=updated_data_pet)
 
@@ -122,7 +113,7 @@ class TestPet:
 
         with allure.step("Проверка, что изменения сохранены"):
             verify_changes = requests.get(url=f"{BASE_URL}/pet/{pet_id}")
-            assert verify_changes.status_code == 200, "Проверка, что изменения сохранены"
+            assert verify_changes.status_code == 200, "Изменения не сохранены"
             verify_changes_json = verify_changes.json()
             assert verify_changes_json["id"] == pet_id, "id изменился после PUT"
             assert verify_changes_json["name"] == "Buddy Updated", "name не сохранился"
@@ -130,19 +121,8 @@ class TestPet:
 #======================================================================================================================
 
     @allure.title("Удаление питомца по ID")
-    def test_delete_pet_by_id(self):
-        with allure.step("Подготовка данных для создания питомца"):
-            payload =  {"id": 1,
-                        "name": "Buddy",
-                        "photoUrls": [],
-                        "status": "available"
-                    }
-        with allure.step("Отправка запроса на создание питомца"):
-            post_response = requests.post(url=f"{BASE_URL}/pet", json=payload)
-        with allure.step("Проверка статуса ответа"):
-            assert post_response.status_code == 200,f"Не удалось создать питомца: {post_response.status_code} {post_response.text}"
-            post_response_json = post_response.json()
-            pet_id = post_response_json["id"]
+    def test_delete_pet_by_id(self, create_pet):
+        pet_id = create_pet["id"]
 
         with allure.step("Отправка запроса на удаление питомца"):
             delete_response = requests.delete(url=f"{BASE_URL}/pet/{pet_id}")
@@ -154,6 +134,7 @@ class TestPet:
             get_response = requests.get(url=f"{BASE_URL}/pet/{pet_id}")
             assert get_response.status_code == 404,  f"Питомец {pet_id} всё ещё существует: {get_response.status_code} {get_response.text}"
 #=======================================================================================================================
+
 
 
 
