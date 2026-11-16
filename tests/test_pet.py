@@ -1,10 +1,10 @@
 import allure
+import pytest
 import requests
 import jsonschema
 from .schemas.pet_schema import PET_SCHEMA
 
 BASE_URL = "https://petstore.swagger.rv-school.ru/api/v3"
-#BASE_URL = "https://petstore.swagger.rv-school.ru"
 
 @allure.feature("Pet")
 
@@ -134,8 +134,42 @@ class TestPet:
             get_response = requests.get(url=f"{BASE_URL}/pet/{pet_id}")
             assert get_response.status_code == 404,  f"Питомец {pet_id} всё ещё существует: {get_response.status_code} {get_response.text}"
 #=======================================================================================================================
+    PET_STATUS_CASES = [
+        pytest.param("available", 200, id="available-status"),
+        pytest.param("pending", 200, id="pending-status"),
+        pytest.param("sold", 200, id="sold-status"),
+        pytest.param("abrakadabra", 400, id="abrakadabra-status"),
+        pytest.param("", 400, id="empty-status"),
+    ]
 
+    @allure.title("Получение списка питомцев по статусу {status!r}")
+    @pytest.mark.parametrize("status, expected_status_code", PET_STATUS_CASES)
+    def test_get_pet_by_status(self, status, expected_status_code):
 
+        with allure.step(f"Отправка запроса на получение питомцев по статусу {status!r}"):
+            get_response = requests.get(
+                url=f"{BASE_URL}/pet/findByStatus",
+                params={"status": status},
+            )
 
+        with allure.step("Проверка статуса ответа"):
+            assert get_response.status_code == expected_status_code, (
+                f"Статус {status!r}: код {get_response.status_code}, "
+                f"ожидался {expected_status_code}"
+            )
 
+        if expected_status_code == 200:
+            with allure.step(f"Проверка, что у всех питомцев статус {status!r}"):
+                pet_json = get_response.json()
+                assert isinstance(pet_json, list), "Ответ не является списком"
+
+                for pet in pet_json:
+                    assert "status" in pet, (
+                        f"У питомца id={pet.get('id')} нет поля 'status'. "
+                        f"Ключи: {list(pet.keys())!r}"
+                    )
+
+                    assert pet["status"] == status, (
+                        f"Питомец с id {pet.get('id')} имеет статус "
+                        f"{pet['status']!r}, ожидался {status!r}")
 
