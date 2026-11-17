@@ -2,13 +2,14 @@ import allure
 import pytest
 import requests
 import jsonschema
+
 from .schemas.pet_schema import PET_SCHEMA
 
 BASE_URL = "https://petstore.swagger.rv-school.ru/api/v3"
 
 @allure.feature("Pet")
-
 class TestPet:
+
     @allure.title("Попытка удалить несуществующего питомца")
     def test_delete_nonexistent_pet(self):
         with allure.step("Отправка запроса на удаление несуществующего питомца"):
@@ -134,17 +135,15 @@ class TestPet:
             get_response = requests.get(url=f"{BASE_URL}/pet/{pet_id}")
             assert get_response.status_code == 404,  f"Питомец {pet_id} всё ещё существует: {get_response.status_code} {get_response.text}"
 #=======================================================================================================================
-    PET_STATUS_CASES = [
+    VALID_STATUS_CASES = [
         pytest.param("available", 200, id="available-status"),
         pytest.param("pending", 200, id="pending-status"),
         pytest.param("sold", 200, id="sold-status"),
-        pytest.param("abrakadabra", 400, id="abrakadabra-status"),
-        pytest.param("", 400, id="empty-status"),
-    ]
+        ]
 
     @allure.title("Получение списка питомцев по статусу {status!r}")
-    @pytest.mark.parametrize("status, expected_status_code", PET_STATUS_CASES)
-    def test_get_pet_by_status(self, status, expected_status_code):
+    @pytest.mark.parametrize("status, expected_status_code", VALID_STATUS_CASES)
+    def test_get_pet_by_status(self,  status, expected_status_code):
 
         with allure.step(f"Отправка запроса на получение питомцев по статусу {status!r}"):
             get_response = requests.get(
@@ -158,18 +157,37 @@ class TestPet:
                 f"ожидался {expected_status_code}"
             )
 
-        if expected_status_code == 200:
-            with allure.step(f"Проверка, что у всех питомцев статус {status!r}"):
-                pet_json = get_response.json()
-                assert isinstance(pet_json, list), "Ответ не является списком"
+        with allure.step(f"Проверка, что у всех питомцев статус {status!r}"):
+            pet_json = get_response.json()
+            assert isinstance(pet_json, list), "Ответ не является списком"
 
-                for pet in pet_json:
-                    assert "status" in pet, (
-                        f"У питомца id={pet.get('id')} нет поля 'status'. "
-                        f"Ключи: {list(pet.keys())!r}"
-                    )
+            errors = []
+            for pet in pet_json:
+                if "status" not in pet:
+                    errors.append(f"id={pet.get('id')}: нет поля 'status'")
+                elif pet["status"] != status:
+                    errors.append(
+                        f"id={pet.get('id')}: статус {pet['status']!r}, "
+                        f"ожидался {status!r}"
+                        )
+            assert not errors, (f"Несовпадения для статуса {status!r}:\n" + "\n".join(errors))
 
-                    assert pet["status"] == status, (
-                        f"Питомец с id {pet.get('id')} имеет статус "
-                        f"{pet['status']!r}, ожидался {status!r}")
 
+
+    INVALID_STATUS_CASES = [
+        pytest.param("abrakadabra", 400, id="abrakadabra-status"),
+        pytest.param("", 400, id="empty-status")
+    ]
+
+    @allure.title("Получение питомцев по невалидному статусу {status!r}")
+    @pytest.mark.parametrize("status, expected_status_code", INVALID_STATUS_CASES)
+    def test_get_pet_by_invalid_status(self, status, expected_status_code):
+
+        with allure.step(f"Отправка запроса с невалидным статусом {status!r}"):
+            get_response = requests.get(url=f"{BASE_URL}/pet/findByStatus", params={"status": status})
+
+        with allure.step("Проверка статуса ответа"):
+            assert get_response.status_code == expected_status_code, (
+                f"Статус {status!r}: код {get_response.status_code}, "
+                f"ожидался {expected_status_code}"
+            )
