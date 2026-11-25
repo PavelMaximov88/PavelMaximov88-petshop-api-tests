@@ -20,6 +20,7 @@ class TestPet:
 
         with allure.step("Проверка текстового содержимого ответа"):
             assert response.text == "Pet deleted", "Текст ошибки не совпал с ожидаемым"
+
 #======================================================================================================================
 
     @allure.title("Попытка обновить несуществующего питомца")
@@ -37,6 +38,7 @@ class TestPet:
 
         with allure.step("Проверка текстового содержимого ответа"):
             assert response.text == "Pet not found", "Текст ошибки не совпал с ожидаемым"
+
 #================================================================================================================
 
     @allure.title("Добавление нового питомца")
@@ -77,6 +79,7 @@ class TestPet:
             if pet_id is not None:
                 with allure.step("Удаление тестового питомца"):
                     requests.delete(f"{BASE_URL}/pet/{pet_id}")
+
 #=======================================================================================================================
 
     @allure.title("Получение информации о питомце по id")
@@ -90,6 +93,7 @@ class TestPet:
         with allure.step("Проверка статуса ответа и данных питомца"):
             assert response.status_code == 200
             assert response.json()["id"] == pet_id
+
 #=======================================================================================================================
 
     @allure.title("Изменение информации о питомце по id")
@@ -119,6 +123,7 @@ class TestPet:
             assert verify_changes_json["id"] == pet_id, "id изменился после PUT"
             assert verify_changes_json["name"] == "Buddy Updated", "name не сохранился"
             assert verify_changes_json["status"] == "sold", "status не сохранился"
+
 #======================================================================================================================
 
     @allure.title("Удаление питомца по ID")
@@ -134,7 +139,9 @@ class TestPet:
         with allure.step("Проверка, что питомец действительно удален"):
             get_response = requests.get(url=f"{BASE_URL}/pet/{pet_id}")
             assert get_response.status_code == 404,  f"Питомец {pet_id} всё ещё существует: {get_response.status_code} {get_response.text}"
+
 #=======================================================================================================================
+
     VALID_STATUS_CASES = [
         pytest.param("available", 200, id="available-status"),
         pytest.param("pending", 200, id="pending-status"),
@@ -191,3 +198,5 @@ class TestPet:
                 f"Статус {status!r}: код {get_response.status_code}, "
                 f"ожидался {expected_status_code}"
             )
+
+#=======================================================================================================================
