@@ -7,32 +7,6 @@ from .schemas.store_schema import ORDER_SCHEMA, INVENTORY_SCHEMA
 BASE_URL = "https://petstore.swagger.rv-school.ru/api/v3"
 @allure.feature("Store")
 class TestStore:
-    @allure.title("Размещение заказа")
-    def test_place_order(self):
-        payload = {
-            "id": 1,
-            "petId": 1,
-            "quantity": 1,
-            "status": "placed",
-            "complete": True,
-        }
-        with allure.step("Отправка запроса на создание заказа"):
-            post_response = requests.post(url=f"{BASE_URL}/store/order", json=payload, timeout=10)
-            post_response_json = post_response.json()
-
-        with allure.step("Проверка статуса ответа и валидация JSON-схемы"):
-            assert post_response.status_code == 200,  (
-                f"Код ответа {post_response.status_code}, ожидался 200"
-            )
-            jsonschema.validate(post_response_json, ORDER_SCHEMA)
-
-        with allure.step("Проверка параметров заказа в ответе"):
-            for key in ("id", "petId", "quantity", "status", "complete"):
-                 assert post_response_json[key] == payload[key], (
-                    f"Поле {key!r}: {post_response_json[key]!r}, "
-                    f"ожидалось {payload[key]!r}"
-                    )
-#=================================================================================================================
 
     PLACE_ORDER_CASES = [
         pytest.param("placed", 200, id="placed"),
@@ -57,7 +31,7 @@ class TestStore:
                 f"Статус {status!r}: код {post_response.status_code}, "
                 f"ожидался {expected_status_code}"
             )
-        if expected_status_code == 200:
+
             with allure.step("Валидация JSON-схемы и полей ответа"):
                 post_response_json = post_response.json()
                 jsonschema.validate(post_response_json, ORDER_SCHEMA)
